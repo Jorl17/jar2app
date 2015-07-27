@@ -7,10 +7,16 @@ import sys
 
 __author__ = 'jorl17'
 
+#------------------------------------------------------------------------------
+# Defaults
+#------------------------------------------------------------------------------
 DEFAULT_VERSION='1.0.0'
 DEFAULT_BUNDLE_IDENTIFIER_PREFIX='com.jar2app.example.'
 DEFAULT_SIGNATURE='????'
 
+#------------------------------------------------------------------------------
+# The info.plist file with placeholders
+#------------------------------------------------------------------------------
 info_plist = """<?xml version="1.0" ?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -69,6 +75,9 @@ info_plist = """<?xml version="1.0" ?>
 </plist>
 """
 
+#------------------------------------------------------------------------------
+# Create a directory and ignore the "File already exists" error
+#------------------------------------------------------------------------------
 def mkdir_ignore_exists(p):
     try:
         os.mkdir(p)
@@ -76,11 +85,25 @@ def mkdir_ignore_exists(p):
     except FileExistsError:
         return False
 
+#------------------------------------------------------------------------------
+# Make a file executable
+#------------------------------------------------------------------------------
 def make_executable(path):
     mode = os.stat(path).st_mode
     mode |= (mode & 0o444) >> 2
     os.chmod(path, mode)
 
+#------------------------------------------------------------------------------
+# Just strip the extension from a name
+#------------------------------------------------------------------------------
+def strip_extension_from_name(name):
+    return os.path.splitext(name)[0]
+
+#------------------------------------------------------------------------------
+# Determine the main class in a JAR file. This basically involves searching
+# through the JAR (it's just a zip file), locating the MANIFEST.MF file,
+# decompressing it and then find the main-class line.
+#------------------------------------------------------------------------------
 def find_jar_mainclass(jar_file):
     f = ZipFile(jar_file, 'r')
     for file in f.infolist():
@@ -92,7 +115,15 @@ def find_jar_mainclass(jar_file):
                 if line.strip().lower().startswith('main-class'):
                     return line.split(':')[1].strip()
 
-
+#------------------------------------------------------------------------------
+# Build the main directory structure of the .App. It should look like
+# <appname>.App/
+#              Contents/
+#                       Java/
+#                       MacOS/
+#                       Resources/
+#                                 en.lproj/
+#------------------------------------------------------------------------------
 def build_directory_structure(app_full_path):
     mkdir_ignore_exists(os.path.dirname(app_full_path)) #Base output directory where the app is placed. Create it.
     mkdir_ignore_exists(app_full_path)
@@ -103,6 +134,13 @@ def build_directory_structure(app_full_path):
     mkdir_ignore_exists(os.path.join(app_full_path, 'Contents', 'Resources'))
     mkdir_ignore_exists(os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj'))
 
+#------------------------------------------------------------------------------
+# Write the plist file in the desired output folder. Note that these arguments
+# are passed directly to the info_plist string, so some of them (jdk,
+# jvm_arguments...) should have a bit of XML.
+#
+# The destination folder is typically <appname>.App/Contents
+#------------------------------------------------------------------------------
 def create_plist_file(destination_folder, icon, bundle_identifier, bundle_displayname, bundle_name,bundle_version,short_version_string,copyright_str, main_class_name, jvm_arguments, jvm_options, jdk, unique_signature):
     filled_info_plist=info_plist.format(icon=icon,
                                         bundle_identifier=bundle_identifier,
@@ -120,6 +158,53 @@ def create_plist_file(destination_folder, icon, bundle_identifier, bundle_displa
     with open(os.path.join(destination_folder, 'Info.plist'), 'w') as f:
         f.write(filled_info_plist)
 
+#------------------------------------------------------------------------------
+# Convert a sequence of strings, separated by spaces, into a sequence of
+# <string></string> strings.
+# E.g., "a b c" becomes "<string>a</string>b<string></string><string>c</string>
+#
+# This is to be used for the JVMArguments and JVMOptions in the plist.xml file
+#------------------------------------------------------------------------------
+def string_to_plist_xmlarray_values(s):
+    if not s:
+        return ''
+    return  '        <string>' + '</string>\n        <string>'.join( [i.strip() for i in s.split() ] ) + '</string>'
+
+#------------------------------------------------------------------------------
+# Check if JDK/JRE is valid. It can be a zip file or it can be a directory.
+# Returns:
+#   * The xml string to use
+#   * The JDK/JRE folder name (not its full path; e.g. for zip files, it strips
+#     the zip extension)
+#   * Whether the JDK/JRE is a file or a directory
+#------------------------------------------------------------------------------
+def determine_jdk(jdk):
+    if not jdk:
+        return '','',True
+    isfile = os.path.isfile(jdk)
+    if isfile:
+        if not jdk.lower().endswith('.zip'):
+            exit('JDK/JRE file is not a zip file.')
+        jdk = strip_extension_from_name(os.path.basename(jdk))
+
+    return '<key>JVMRuntime</key>\n<string>' + jdk + '</string>',jdk,isfile
+
+#------------------------------------------------------------------------------
+# Copy a JDK to the bundled .app. The app_full_path should be the root of
+# the app (e.g. Test.app/). JDK should be the path to the JDK/JRE and
+# jdk_isfile comes from determine_jdk and indicates if the this JDK is a zip
+# file or a directory.
+#
+# In case it's a directory, we just copy it over. If it's a zip file, we must
+# first decompress it.
+#
+# In general, the JVM should go to <appname>.App/Contents/PlugIns, e.g. the
+# structure might become
+# <appname>.App/Contents/PlugIns/jdk1.8.0_40.jdk
+#
+# This JDK should be in the format expected by AppBundler (check if the first
+# directory is just a Contents folder)
+#------------------------------------------------------------------------------
 def copy_jdk(app_full_path, jdk, jdk_isfile):
     if jdk:
         if jdk_isfile:
@@ -144,28 +229,38 @@ def copy_jdk(app_full_path, jdk, jdk_isfile):
         else:
             shutil.copytree(jdk, os.path.join(app_full_path, 'Contents', 'PlugIns', os.path.basename(jdk)))
 
-
+#------------------------------------------------------------------------------
+# Copy all files to the previously created directory. This involes copying
+# the Localizable.strings file, the JavaAppLauncher executable and, finally,
+# the JDK/JRE and application icon if they were provided
+#------------------------------------------------------------------------------
 def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile):
-    #shutil.copyfile(join('basefiles', 'Pkginfo'), join(app_full_path, 'Contents', 'Pkginfo'))
     if icon:
         shutil.copy2(icon,os.path.join(app_full_path, 'Contents', 'Resources'))
     shutil.copy2(os.path.join('basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
     shutil.copy2(os.path.join('basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
     make_executable(os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
     shutil.copy2(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
-
     copy_jdk(app_full_path, jdk, jdk_isfile)
 
-
-def strip_extension_from_name(name):
-    return os.path.splitext(name)[0]
-
+#------------------------------------------------------------------------------
+# Determine the destination Appname (and full path) taking into account the
+# parameters. Note that:
+# 1. If output is provided and it is a destination file, its name is used as
+#    the appname
+# 2. If output is provided but it is a destination folder, then name must be
+#    figured out with the next steps (as if output wasn't provided).
+# 3. Prefer the bundle name
+# 4. Prefer the bundle displayname
+# 5. Prefer the jar name (without extension, of course)
+# We also assume that by default the output should go to the current directory.
+#------------------------------------------------------------------------------
 def determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_append_app):
     if output:
         dir,name = os.path.split(output)
-        if not dir:
+        if not dir: #All that was given was a filename
             dir = '.'
-    else:
+    else: #Assume default directory
         dir = '.'
         name = ''
 
@@ -188,29 +283,12 @@ def determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_a
             else:
                 return os.path.join(dir,name + '.app')
         else:
-            return dir,name
+            return os.path.join(dir,name)
 
-
-def determine_jdk(jdk):
-    if not jdk:
-        return '','',True
-    isfile = os.path.isfile(jdk)
-    if isfile:
-        if not jdk.lower().endswith('.zip'):
-            exit('JDK file is not a zip file.')
-        jdk = strip_extension_from_name(os.path.basename(jdk))
-
-    return '<key>JVMRuntime</key>\n<string>' + jdk + '</string>',jdk,isfile
-
-
-
-
-def string_to_plist_xmlarray_values(s):
-    if not s:
-        return ''
-    return  '        <string>' + '</string>\n        <string>'.join( [i.strip() for i in s.split() ] ) + '</string>'
-
-
+#------------------------------------------------------------------------------
+# Print summary info on the fields used, if they are used. Used when the
+# process is done
+#------------------------------------------------------------------------------
 def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk):
     def print_field_if_not_null(name, field):
         if field:
@@ -224,20 +302,26 @@ def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_na
     print_field_if_not_null('CFBundleSignature', unique_signature)
     print_field_if_not_null('CFBundleVersion', bundle_version)
     print_field_if_not_null('NSHumanReadableCopyright', copyright_str)
+    print('---')
     print_field_if_not_null('JVMOptions', orig_jvm_options)
     print_field_if_not_null('JVMMainClassName', main_class_name)
     print_field_if_not_null('JVMRuntime', jdk)
 
-
+#------------------------------------------------------------------------------
+# This is the main application logic. It receives the arguments straight from
+# the user, gives appropriate defaults, builds the directory structure,
+# copies files (packing the JDK/JRE) and creates the plist file. In the end,
+# if all went well, it displays summary info.
+#------------------------------------------------------------------------------
 def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_displayname=None, bundle_name=None, bundle_version=None, short_version_string=None, copyright_str=None, main_class_name=None, jvm_arguments=None, jvm_options=None, jdk=None, unique_signature=None, auto_append_app=True):
     def default_value(d, default):
         return d if d else default
 
-    orig_jvm_options = jvm_options
-    jar_name = os.path.basename(jar_file)
-    app_full_path = determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_append_app)
-    app_name = strip_extension_from_name(os.path.basename(app_full_path))
-    icon = default_value(icon, '')
+    orig_jvm_options  = jvm_options
+    jar_name          = os.path.basename(jar_file)
+    app_full_path     = determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_append_app)
+    app_name          = strip_extension_from_name(os.path.basename(app_full_path))
+    icon              = default_value(icon, '')
     bundle_identifier = default_value(bundle_identifier, DEFAULT_BUNDLE_IDENTIFIER_PREFIX + app_name)
 
     if not bundle_displayname:
@@ -259,19 +343,22 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
             bundle_version = short_version_string if short_version_string else DEFAULT_VERSION
 
     # When we get here, we always have bundle_version, even if it is the default
-    short_version_string = default_value(short_version_string, bundle_version)
-    copyright_str = default_value(copyright_str, '')
-    main_class_name = default_value(main_class_name, find_jar_mainclass(jar_file))
-    unique_signature = default_value(unique_signature, '????')
-    jvm_arguments = string_to_plist_xmlarray_values(jvm_arguments)
-    jvm_options  = string_to_plist_xmlarray_values(jvm_options)
+    short_version_string        = default_value(short_version_string, bundle_version)
+    copyright_str               = default_value(copyright_str, '')
+    main_class_name             = default_value(main_class_name, find_jar_mainclass(jar_file))
+    unique_signature            = default_value(unique_signature, '????')
+    jvm_arguments               = string_to_plist_xmlarray_values(jvm_arguments)
+    jvm_options                 = string_to_plist_xmlarray_values(jvm_options)
     jdk_xml,jdk_name,jdk_isfile = determine_jdk(jdk)
+
+    print('Packing {} into {}'.format(jar_file, os.path.abspath(app_full_path)))
 
     build_directory_structure(app_full_path)
     create_plist_file(os.path.join(app_full_path, 'Contents'), os.path.basename(icon), bundle_identifier, bundle_displayname, bundle_name,bundle_version,short_version_string,copyright_str, main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature)
     copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile)
 
     print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk_name)
+    print()
     print("{} converted to {}.".format(jar_file, os.path.abspath(app_full_path)))
 
 jar_file = '/Users/jorl17/Applications/mcpatcher-5.0.2.jar'
@@ -311,6 +398,7 @@ def parse_input():
 
     return input_file, output, options.icon, options.bundle_identifier, options.bundle_displayname, options.bundle_name, options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name, jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name
 
-make_app(*parse_input())
+def main():
+    make_app(*parse_input())
 
-#make_app(jar_file, 'Test/', jdk='jdk1.8.0_40.jdk')
+main()
