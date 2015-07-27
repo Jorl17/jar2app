@@ -262,8 +262,8 @@ def copy_jdk(app_full_path, jdk, jdk_isfile):
 def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile):
     if icon:
         shutil.copy2(icon,os.path.join(app_full_path, 'Contents', 'Resources'))
-    shutil.copy2(os.path.join('jar2app_basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
-    shutil.copy2(os.path.join('jar2app_basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
+    shutil.copy2(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
+    shutil.copy2(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
     make_executable(os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
     shutil.copy2(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
     copy_jdk(app_full_path, jdk, jdk_isfile)
