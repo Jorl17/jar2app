@@ -384,7 +384,7 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
 
     print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk_name)
     print()
-    print("{} converted to {}.".format(jar_file, os.path.abspath(app_full_path)))
+    print("{} packaged to {}.".format(jar_file, os.path.abspath(app_full_path)))
 
 jar_file = '/Users/jorl17/Applications/mcpatcher-5.0.2.jar'
 
