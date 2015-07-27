@@ -32,6 +32,7 @@ Table of Contents
   * [How is the App name determined?](#how-is-the-app-name-determined)
   * [Where did this idea come from?](#where-did-this-idea-come-from)
   * [Is there a GUI?](#is-there-a-gui)
+  * [Does it work on retina screens?](#does-it-work-on-retina-screens)
   * [jar2app doesn't do what I want. Are there other alternatives?](#jar2app-doesnt-do-what-i-want-are-there-other-alternatives)
   * [Example Usage](#example-usage)
     * [Easiest way to bundle](#easiest-way-to-bundle)
@@ -134,6 +135,9 @@ Well, you should probably check [this FAQ entry first](#arent-there-other-tools-
 
 # Is there a GUI?
 This tool is so simple to use that it seems pointless to add a GUI. Nevertheless, for all your command line aversion needs, I might implement a really simple optional GUI in the future (probably using PyQt).
+
+# Does it work on retina screens?
+Yes it does. It adds specific entries in the Info.plist file to ensure that retina screen is enabled by default. You can change that by passing `-l`,`--low-res-mode`.
 
 # jar2app doesn't do what I want. Are there other alternatives?
 **jar2app** tries to do most of what the other tools do. It's lacking mostly in JRE/JDK minimizing support, and it hasn't really been thoroughly tested when bundling things for the app store.
@@ -238,5 +242,8 @@ You can also pass the JDK/JRE as a **zip file**. Assume you have it in compresse
   -a, --no-append-app-to-name
                         Do not try to append .app to the output file by
                         default.
+  -l, --low-res-mode    Do not try to report retina-screen capabilities (use
+                        low resolution mode; by default high resolution mode
+                        is used).
 ```
 
