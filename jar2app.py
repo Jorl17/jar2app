@@ -3,7 +3,6 @@ import os.path
 import shutil
 import tempfile
 from zipfile import ZipFile
-from os import rmdir
 import sys
 
 __author__ = 'jorl17'
@@ -146,8 +145,10 @@ def copy_jdk(app_full_path, jdk, jdk_isfile):
             shutil.copytree(jdk, os.path.join(app_full_path, 'Contents', 'PlugIns', os.path.basename(jdk)))
 
 
-def copy_base_files(app_full_path, jar_file, jdk, jdk_isfile):
+def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile):
     #shutil.copyfile(join('basefiles', 'Pkginfo'), join(app_full_path, 'Contents', 'Pkginfo'))
+    if icon:
+        shutil.copy2(icon,os.path.join(app_full_path, 'Contents', 'Resources'))
     shutil.copy2(os.path.join('basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
     shutil.copy2(os.path.join('basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
     make_executable(os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
@@ -192,14 +193,14 @@ def determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_a
 
 def determine_jdk(jdk):
     if not jdk:
-        return '',True
+        return '','',True
     isfile = os.path.isfile(jdk)
     if isfile:
         if not jdk.lower().endswith('.zip'):
             exit('JDK file is not a zip file.')
         jdk = strip_extension_from_name(os.path.basename(jdk))
 
-    return '<key>JVMRuntime</key>\n<string>' + jdk + '</string>',isfile
+    return '<key>JVMRuntime</key>\n<string>' + jdk + '</string>',jdk,isfile
 
 
 
@@ -210,13 +211,32 @@ def string_to_plist_xmlarray_values(s):
     return  '        <string>' + '</string>\n        <string>'.join( [i.strip() for i in s.split() ] ) + '</string>'
 
 
+def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk):
+    def print_field_if_not_null(name, field):
+        if field:
+            print('{}: {}'.format(name, field))
+
+    print_field_if_not_null('CFBundleIconFile', icon)
+    print_field_if_not_null('CFBundleIdentifier', bundle_identifier)
+    print_field_if_not_null('CFBundleDisplayName', bundle_displayname)
+    print_field_if_not_null('CFBundleName', bundle_name)
+    print_field_if_not_null('CFBundleShortVersionString', short_version_string)
+    print_field_if_not_null('CFBundleSignature', unique_signature)
+    print_field_if_not_null('CFBundleVersion', bundle_version)
+    print_field_if_not_null('NSHumanReadableCopyright', copyright_str)
+    print_field_if_not_null('JVMOptions', orig_jvm_options)
+    print_field_if_not_null('JVMMainClassName', main_class_name)
+    print_field_if_not_null('JVMRuntime', jdk)
+
+
 def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_displayname=None, bundle_name=None, bundle_version=None, short_version_string=None, copyright_str=None, main_class_name=None, jvm_arguments=None, jvm_options=None, jdk=None, unique_signature=None, auto_append_app=True):
     def default_value(d, default):
         return d if d else default
 
+    orig_jvm_options = jvm_options
     jar_name = os.path.basename(jar_file)
-    app_name_w_extension = determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_append_app)
-    app_name = strip_extension_from_name(os.path.basename(app_name_w_extension))
+    app_full_path = determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_append_app)
+    app_name = strip_extension_from_name(os.path.basename(app_full_path))
     icon = default_value(icon, '')
     bundle_identifier = default_value(bundle_identifier, DEFAULT_BUNDLE_IDENTIFIER_PREFIX + app_name)
 
@@ -245,11 +265,14 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     unique_signature = default_value(unique_signature, '????')
     jvm_arguments = string_to_plist_xmlarray_values(jvm_arguments)
     jvm_options  = string_to_plist_xmlarray_values(jvm_options)
-    jdk_xml,jdk_isfile = determine_jdk(jdk)
+    jdk_xml,jdk_name,jdk_isfile = determine_jdk(jdk)
 
-    build_directory_structure(app_name_w_extension)
-    create_plist_file(os.path.join(app_name_w_extension, 'Contents'), icon, bundle_identifier, bundle_displayname, bundle_name,bundle_version,short_version_string,copyright_str, main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature)
-    copy_base_files(app_name_w_extension, jar_file, jdk, jdk_isfile)
+    build_directory_structure(app_full_path)
+    create_plist_file(os.path.join(app_full_path, 'Contents'), os.path.basename(icon), bundle_identifier, bundle_displayname, bundle_name,bundle_version,short_version_string,copyright_str, main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature)
+    copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile)
+
+    print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk_name)
+    print("{} converted to {}.".format(jar_file, os.path.abspath(app_full_path)))
 
 jar_file = '/Users/jorl17/Applications/mcpatcher-5.0.2.jar'
 
@@ -285,6 +308,7 @@ def parse_input():
         options.auto_append_name = True
 
     jvm_arguments = ''
+
     return input_file, output, options.icon, options.bundle_identifier, options.bundle_displayname, options.bundle_name, options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name, jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name
 
 make_app(*parse_input())
