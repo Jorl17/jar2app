@@ -157,7 +157,7 @@ This can be done in several ways. The most straightforward one is just:
 
     jar2app test.jar out
     
-You should now have a `out.App` in your directory. Note how **jar2app** automatically appends the `.App` extension (this can be disabled with `-a`,`--no-append-app-to-name`. You can also do
+You should now have a `out.App` in your directory. Note how **jar2app** automatically appends the `.App` extension (this can be disabled with `-a`,`--no-append-app-to-name`). You can also do
     jar2app test.jar out.App
     
 Lastly, You can also do
