@@ -1,12 +1,16 @@
+from optparse import OptionParser
 import os.path
 import shutil
 import tempfile
 from zipfile import ZipFile
 from os import rmdir
+import sys
 
 __author__ = 'jorl17'
 
 DEFAULT_VERSION='1.0.0'
+DEFAULT_BUNDLE_IDENTIFIER_PREFIX='com.jar2app.example.'
+DEFAULT_SIGNATURE='????'
 
 info_plist = """<?xml version="1.0" ?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -156,7 +160,13 @@ def strip_extension_from_name(name):
     return os.path.splitext(name)[0]
 
 def determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_append_app):
-    dir,name = os.path.split(output)
+    if output:
+        dir,name = os.path.split(output)
+        if not dir:
+            dir = '.'
+    else:
+        dir = '.'
+        name = ''
 
     if not name:
         # If no .app name is provided, prefer:
@@ -197,7 +207,7 @@ def determine_jdk(jdk):
 def string_to_plist_xmlarray_values(s):
     if not s:
         return ''
-    return  '        <string>' + '</string>\n        <string>'.join( [i.strip() for i in s.split(',') ] ) + '</string>'
+    return  '        <string>' + '</string>\n        <string>'.join( [i.strip() for i in s.split() ] ) + '</string>'
 
 
 def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_displayname=None, bundle_name=None, bundle_version=None, short_version_string=None, copyright_str=None, main_class_name=None, jvm_arguments=None, jvm_options=None, jdk=None, unique_signature=None, auto_append_app=True):
@@ -206,9 +216,9 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
 
     jar_name = os.path.basename(jar_file)
     app_name_w_extension = determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_append_app)
-    app_name = strip_extension_from_name(app_name_w_extension)
+    app_name = strip_extension_from_name(os.path.basename(app_name_w_extension))
     icon = default_value(icon, '')
-    bundle_identifier = default_value(bundle_identifier, 'com.jar2app.example.' + app_name)
+    bundle_identifier = default_value(bundle_identifier, DEFAULT_BUNDLE_IDENTIFIER_PREFIX + app_name)
 
     if not bundle_displayname:
         # If no bundle_displayname is provided:
@@ -242,4 +252,41 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     copy_base_files(app_name_w_extension, jar_file, jdk, jdk_isfile)
 
 jar_file = '/Users/jorl17/Applications/mcpatcher-5.0.2.jar'
+
+def parse_input():
+    parser = OptionParser()
+    parser.add_option('-n', '--name', help='Package/Bundle name.', dest='bundle_name', type='string', default=None)
+    parser.add_option('-d', '--display-name', help='Package/Bundle display name.', dest='bundle_displayname', type='string',default=None)
+    parser.add_option('-i', '--icon',help='Icon (in .icns format). (Default: None)', dest='icon', type='string', default=None)
+    parser.add_option('-b', '--bundle-identifier', help='Package/Bundle identifier (e.g. com.example.test) (Default is application name prefix by {}.'.format(DEFAULT_BUNDLE_IDENTIFIER_PREFIX), dest='bundle_identifier',type='string', default=None)
+    parser.add_option('-v', '--version', help='Package/Bundle version (e.g. 1.0.0) (Default: {}).'.format(DEFAULT_VERSION),dest='bundle_version', type='string', default=DEFAULT_VERSION)
+    parser.add_option('-s', '--short-version', help='Package/Bundle short version (see Apple\'s documentation on CFBundleShortVersionString) (Default: {}).'.format(DEFAULT_VERSION), dest='short_version_string',type='string', default=DEFAULT_VERSION)
+    parser.add_option('-c', '--copyright',help='Package/Bundle copyright string (e.g. (c) 2015 Awesome Person) (Default: empty)',dest='copyright_str', type='string', default=None)
+    parser.add_option('-u', '--unique-signature', help='4 Byte unique signature of your application (Default: {})'.format(DEFAULT_SIGNATURE),dest='signature', type='string', default=DEFAULT_SIGNATURE)
+    parser.add_option('-m', '--main-class', help='Jar main class. Blank for auto-detection (usually right).',dest='main_class_name', type='string', default=None)
+    parser.add_option('-r', '--runtime', help='JRE/JDK runtime to bundle. Can be a folder or a zip file. If none is given, the default on the system is used (default: None)',dest='jdk', type='string', default=None)
+    parser.add_option('-j', '--jvm-options',help='JVM options. Place one by one, separated by spaces, inside inverted commas (e.g. -o "-Xmx1024M -Xms256M) (Default: None)',dest='jvm_options', type='string', default=None)
+    parser.add_option('-a', '--no-append-app-to-name', help='Do not try to append .app to the output file by default.', dest='auto_append_name', action='store_false')
+
+    (options, args) = parser.parse_args()
+
+    if len(args) == 2:
+        input_file = args[0]
+        output = args[1]
+    elif len(args) > 2:
+        parser.error('Extra arguments provided!')
+    elif len(args) == 1:
+        input_file = args[0]
+        output = None
+    else:
+        parser.error('An input file is needed. Optionally, you can also provide an output file or directory. E.g.\n{} in.jar\n{} in.jar out.app\n{} in.jar out/'.format(sys.argv[0], sys.argv[0], sys.argv[0]) )
+
+    if options.auto_append_name == None:
+        options.auto_append_name = True
+
+    jvm_arguments = ''
+    return input_file, output, options.icon, options.bundle_identifier, options.bundle_displayname, options.bundle_name, options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name, jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name
+
+make_app(*parse_input())
+
 #make_app(jar_file, 'Test/', jdk='jdk1.8.0_40.jdk')
