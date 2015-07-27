@@ -102,7 +102,7 @@ def strip_extension_from_name(name):
 #------------------------------------------------------------------------------
 # Determine the main class in a JAR file. This basically involves searching
 # through the JAR (it's just a zip file), locating the MANIFEST.MF file,
-# decompressing it and then find the main-class line.
+# decompressing it and then finding the main-class line.
 #------------------------------------------------------------------------------
 def find_jar_mainclass(jar_file):
     f = ZipFile(jar_file, 'r')
@@ -163,7 +163,9 @@ def create_plist_file(destination_folder, icon, bundle_identifier, bundle_displa
 # <string></string> strings.
 # E.g., "a b c" becomes "<string>a</string>b<string></string><string>c</string>
 #
-# This is to be used for the JVMArguments and JVMOptions in the plist.xml file
+# This is to be used for the JVMArguments and JVMOptions in the plist.xml file.
+# Also note that there is some whitespace added. This is to comply with the
+# indent of the xml file.
 #------------------------------------------------------------------------------
 def string_to_plist_xmlarray_values(s):
     if not s:
@@ -237,8 +239,8 @@ def copy_jdk(app_full_path, jdk, jdk_isfile):
 def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile):
     if icon:
         shutil.copy2(icon,os.path.join(app_full_path, 'Contents', 'Resources'))
-    shutil.copy2(os.path.join('basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
-    shutil.copy2(os.path.join('basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
+    shutil.copy2(os.path.join('jar2app_basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
+    shutil.copy2(os.path.join('jar2app_basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
     make_executable(os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
     shutil.copy2(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
     copy_jdk(app_full_path, jdk, jdk_isfile)
