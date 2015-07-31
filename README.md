@@ -33,6 +33,7 @@ Table of Contents
   * [Where did this idea come from?](#where-did-this-idea-come-from)
   * [Is there a GUI?](#is-there-a-gui)
   * [Does it work on retina screens?](#does-it-work-on-retina-screens)
+  * [Should I use jar2app for my commercial application?](#should-i-use-jar2app-for-my-commercial-application)
   * [jar2app doesn't do what I want. Are there other alternatives?](#jar2app-doesnt-do-what-i-want-are-there-other-alternatives)
   * [Example Usage](#example-usage)
     * [Easiest way to bundle](#easiest-way-to-bundle)
@@ -139,6 +140,9 @@ This tool is so simple to use that it seems pointless to add a GUI. Nevertheless
 # Does it work on retina screens?
 Yes it does. It adds specific entries in the Info.plist file to ensure that retina screen is enabled by default. You can change that by passing `-l`,`--low-res-mode`.
 
+# Should I use jar2app for my commercial application?
+You can, but don't expect a one-liner to do the trick. There are several parameters that you have to configure, including special unique keys and signatures. **jar2app** has many defaults that **should not be used** if you intend to distribute your application in very serious fashion. Use it with the default values for simple, easy and straightforward redistribution.
+
 # jar2app doesn't do what I want. Are there other alternatives?
 **jar2app** tries to do most of what the other tools do. It's lacking mostly in JRE/JDK minimizing support, and it hasn't really been thoroughly tested when bundling things for the app store.
 
@@ -201,7 +205,7 @@ Say you want to bundle your own JDK/JRE. For instance, assume you want to bundle
 
 You can also pass the JDK/JRE as a **zip file**. Assume you have it in compressed form in `/compressedJDKs/jdk1.8.0_40.jdk.zip`, just do:
 
-	jar2app test.jar -r /compressedJDKs/jdk1.8.0_40.jdk.zip
+	jar2app test.jar -r /compressedJDKs/jdk1.8.0_40.jdk.zip   
    
 # What are all the options?
 
