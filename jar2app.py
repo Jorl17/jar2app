@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ##
 ## Copyright (C) 2015 João Ricardo Lourenço <jorl17.8@gmail.com>
 ##
@@ -29,6 +30,13 @@ from zipfile import ZipFile
 import sys
 
 __author__ = 'jorl17'
+
+# Python 2 compatibility
+is_python2 = sys.version_info[0] == 2
+if is_python2:
+    FileExistsError = OSError
+else:
+    from builtin import FileExistsError
 
 #------------------------------------------------------------------------------
 # Defaults
@@ -400,8 +408,8 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile)
 
     print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk_name, retina_screen)
-    print()
-    print("{} packaged to {}.".format(jar_file, os.path.abspath(app_full_path)))
+
+    print("\n{} packaged to {}.".format(jar_file, os.path.abspath(app_full_path)))
 
 jar_file = '/Users/jorl17/Applications/mcpatcher-5.0.2.jar'
 
