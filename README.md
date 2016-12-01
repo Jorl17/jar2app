@@ -20,9 +20,9 @@ Table of Contents
   * [How do I install/uninstall it?](#how-do-i-installuninstall-it)
     * [Examples:](#examples)
       * [Install](#install)
-      * [Install to /usr/local prefix](#install-to-usrlocal-prefix)
+      * [Install to /usr/local/bin prefix](#install-to-usrlocalbin-prefix)
       * [Uninstall](#uninstall)
-      * [Uninstall from /usr/local prefix](#uninstall-from-usrlocal-prefix)
+      * [Uninstall from /usr/local/bin prefix](#uninstall-from-usrlocalbin-prefix)
   * [How does it work?](#how-does-it-work)
   * [What exactly can I change?](#what-exactly-can-i-change)
   * [Does jar2app bundle its own JRE/JDK? Can I bundle my own?](#does-jar2app-bundle-its-own-jrejdk-can-i-bundle-my-own)
@@ -64,15 +64,15 @@ If you're also considering why these contributions  weren't just sent to one of 
     cd jar2app
     chmod +x install.sh uninstall.sh
     sudo ./install.sh
-### Install to /usr/local prefix
+### Install to /usr/local/bin prefix
     git clone https://github.com/Jorl17/jar2app
     cd jar2app
     chmod +x install.sh uninstall.sh
-    sudo ./install.sh /usr/local
+    sudo ./install.sh /usr/local/bin
 ### Uninstall 
     ./uninstall.sh
-### Uninstall from /usr/local prefix
-    ./uninstall.sh /usr/local
+### Uninstall from /usr/local/bin prefix
+    ./uninstall.sh /usr/local/bin
 
 # How does it work?
 **jar2app** relies on [JavaAppLauncher](https://java.net/projects/appbundler) (although you don't need to install anything). This application, officially provided by Oracle (previously Apple), acts as wrapper that starts a JVM with a set of options. The JVM can be bundled with the App file, or the system-wide-one can be used. Essentially, all that **jar2app** has to do is create a directory structure (app files are just directories), pack *JavaAppLauncher* and your application in it and set appropriate values in an *Info.plist* file. Additionally, if you so wish, your own JDK or JRE can be bundled and the *Info.plist* file will be updated to reflect this.
