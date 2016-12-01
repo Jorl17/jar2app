@@ -35,8 +35,7 @@ __author__ = 'jorl17'
 is_python2 = sys.version_info[0] == 2
 if is_python2:
     FileExistsError = OSError
-else:
-    from builtin import FileExistsError
+
 
 #------------------------------------------------------------------------------
 # Defaults
