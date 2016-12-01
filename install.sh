@@ -11,6 +11,7 @@ then
   mkdir $PREFIX/jar2app_basefiles
 fi
 cp -r jar2app_basefiles/* $PREFIX/jar2app_basefiles
+chmod -R a+rw $PREFIX/jar2app_basefiles
 cp jar2app $PREFIX
 chmod +x $PREFIX/jar2app
 
