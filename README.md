@@ -1,6 +1,6 @@
 # jar2app
 
-**jar2app** is a Python 3 script that can easily convert any *jar* file into a *Mac OS X app* file. It seeks **simplicity**, and in fact can be run just like
+**jar2app** is a Python 2/3 script that can easily convert any *jar* file into a *Mac OS X app* file. It seeks **simplicity**, and in fact can be run just like
 
     jar2app input.jar
     
