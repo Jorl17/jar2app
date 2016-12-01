@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-## Copyright (C) 2015 João Ricardo Lourenço <jorl17.8@gmail.com>
+## Copyright (C) 2015-2016 João Ricardo Lourenço <jorl17.8@gmail.com>
 ##
 ## Github: https://github.com/Jorl17
 ##
@@ -410,8 +410,6 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk_name, retina_screen)
 
     print("\n{} packaged to {}.".format(jar_file, os.path.abspath(app_full_path)))
-
-jar_file = '/Users/jorl17/Applications/mcpatcher-5.0.2.jar'
 
 def parse_input():
     parser = OptionParser()
