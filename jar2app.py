@@ -228,7 +228,8 @@ def determine_jdk(jdk):
             exit('JDK/JRE file is not a zip file.')
         jdk = strip_extension_from_name(os.path.basename(jdk))
 
-    return '<key>JVMRuntime</key>\n<string>' + jdk + '</string>',jdk,isfile
+    dir, name = os.path.split(jdk)
+    return '<key>JVMRuntime</key>\n<string>' + name + '</string>',jdk,isfile
 
 #------------------------------------------------------------------------------
 # Copy a JDK to the bundled .app. The app_full_path should be the root of
