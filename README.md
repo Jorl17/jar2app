@@ -253,5 +253,8 @@ You can also pass the JDK/JRE as a **zip file**. Assume you have it in compresse
   -o, --use-osx-menubar
                         Use OSX menu bar instead of Java menu bar (Default:
                         False).
+  -w WORKING_DIRECTORY, --working-directory=WORKING_DIRECTORY
+                        Set current working directory on launch (Default:
+                        $APP_ROOT/Contents).
 ```
 
