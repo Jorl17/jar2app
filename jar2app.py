@@ -103,6 +103,13 @@ info_plist = """<?xml version="1.0" ?>
     <array>
 {jvm_arguments}
     </array>
+
+    <key>Properties</key>
+    <dict>
+        <key>apple.laf.useScreenMenuBar</key>
+        <string>{use_screen_menu_bar}</string>
+    </dict>
+
     </dict>
 </plist>
 """
@@ -179,7 +186,9 @@ def build_directory_structure(app_full_path):
 #
 # The destination folder is typically <appname>.App/Contents
 #------------------------------------------------------------------------------
-def create_plist_file(destination_folder, icon, bundle_identifier, bundle_displayname, bundle_name,bundle_version,short_version_string,copyright_str, main_class_name, jvm_arguments, jvm_options, jdk, unique_signature, retina_support):
+def create_plist_file(destination_folder, icon, bundle_identifier, bundle_displayname, bundle_name,bundle_version,
+                      short_version_string,copyright_str, main_class_name, jvm_arguments, jvm_options, jdk,
+                      unique_signature, retina_support, use_screen_menu_bar):
     filled_info_plist=info_plist.format(icon=icon,
                                         bundle_identifier=bundle_identifier,
                                         bundle_displayname=bundle_displayname,
@@ -192,7 +201,8 @@ def create_plist_file(destination_folder, icon, bundle_identifier, bundle_displa
                                         jvm_options=jvm_options,
                                         jdk=jdk,
                                         unique_signature=unique_signature,
-                                        retina_support=retina_support)
+                                        retina_support=retina_support,
+                                        use_screen_menu_bar=use_screen_menu_bar)
 
     with open(os.path.join(destination_folder, 'Info.plist'), 'w') as f:
         f.write(filled_info_plist)
@@ -358,7 +368,10 @@ def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_na
 # copies files (packing the JDK/JRE) and creates the plist file. In the end,
 # if all went well, it displays summary info.
 #------------------------------------------------------------------------------
-def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_displayname=None, bundle_name=None, bundle_version=None, short_version_string=None, copyright_str=None, main_class_name=None, jvm_arguments=None, jvm_options=None, jdk=None, unique_signature=None, auto_append_app=True, retina_screen=True):
+def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_displayname=None, bundle_name=None,
+             bundle_version=None, short_version_string=None, copyright_str=None, main_class_name=None,
+             jvm_arguments=None, jvm_options=None, jdk=None, unique_signature=None, auto_append_app=True,
+             retina_screen=True, use_screen_menu_bar=False):
     def default_value(d, default):
         return d if d else default
 
@@ -404,7 +417,10 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     print('Packing {} into {}'.format(jar_file, os.path.abspath(app_full_path)))
 
     build_directory_structure(app_full_path)
-    create_plist_file(os.path.join(app_full_path, 'Contents'), os.path.basename(icon), bundle_identifier, bundle_displayname, bundle_name,bundle_version,short_version_string,copyright_str, main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature, retina_screen)
+    create_plist_file(os.path.join(app_full_path, 'Contents'), os.path.basename(icon), bundle_identifier,
+                      bundle_displayname, bundle_name,bundle_version,short_version_string,copyright_str,
+                      main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature, retina_screen,
+                      use_screen_menu_bar)
     copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile)
 
     print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk_name, retina_screen)
@@ -426,6 +442,7 @@ def parse_input():
     parser.add_option('-j', '--jvm-options',help='JVM options. Place one by one, separated by spaces, inside inverted commas (e.g. -o "-Xmx1024M -Xms256M) (Default: None)',dest='jvm_options', type='string', default=None)
     parser.add_option('-a', '--no-append-app-to-name', help='Do not try to append .app to the output file by default.', dest='auto_append_name', action='store_false')
     parser.add_option('-l', '--low-res-mode', help='Do not try to report retina-screen capabilities (use low resolution mode; by default high resolution mode is used).',dest='retina_screen', action='store_false')
+    parser.add_option('-o', '--use-osx-menubar', help='Use OSX menu bar instead of Java menu bar (Default: False).', dest='use_screen_menu_bar', action='store_true')
 
     (options, args) = parser.parse_args()
 
@@ -448,7 +465,10 @@ def parse_input():
 
     jvm_arguments = ''
 
-    return input_file, output, options.icon, options.bundle_identifier, options.bundle_displayname, options.bundle_name, options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name, jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name, options.retina_screen
+    return input_file, output, options.icon, options.bundle_identifier, options.bundle_displayname, options.bundle_name,\
+           options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name,\
+           jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name,\
+           options.retina_screen, options.use_screen_menu_bar
 
 def main():
     make_app(*parse_input())
