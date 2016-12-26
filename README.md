@@ -250,5 +250,8 @@ You can also pass the JDK/JRE as a **zip file**. Assume you have it in compresse
   -l, --low-res-mode    Do not try to report retina-screen capabilities (use
                         low resolution mode; by default high resolution mode
                         is used).
+  -o, --use-osx-menubar
+                        Use OSX menu bar instead of Java menu bar (Default:
+                        False).
 ```
 
