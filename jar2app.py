@@ -281,6 +281,17 @@ def copy_jdk(app_full_path, jdk, jdk_isfile):
         else:
             shutil.copytree(jdk, os.path.join(app_full_path, 'Contents', 'PlugIns', os.path.basename(jdk)))
 
+
+# ------------------------------------------------------------------------------
+# Copy all files while also preserving status information. If status cannot be
+# copied, drop it and copy mode instead.
+# ------------------------------------------------------------------------------
+def copy_preserve_status(src, dst):
+    try:
+        shutil.copy2(src, dst)
+    except OSError:
+        shutil.copy(src, dst)
+
 #------------------------------------------------------------------------------
 # Copy all files to the previously created directory. This involes copying
 # the Localizable.strings file, the JavaAppLauncher executable and, finally,
@@ -288,11 +299,11 @@ def copy_jdk(app_full_path, jdk, jdk_isfile):
 #------------------------------------------------------------------------------
 def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile):
     if icon:
-        shutil.copy2(icon,os.path.join(app_full_path, 'Contents', 'Resources'))
-    shutil.copy2(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
-    shutil.copy2(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
+        copy_preserve_status(icon,os.path.join(app_full_path, 'Contents', 'Resources'))
+    copy_preserve_status(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
+    copy_preserve_status(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
     make_executable(os.path.join(app_full_path, 'Contents', 'MacOS', 'JavaAppLauncher'))
-    shutil.copy2(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
+    copy_preserve_status(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
     copy_jdk(app_full_path, jdk, jdk_isfile)
 
 #------------------------------------------------------------------------------
