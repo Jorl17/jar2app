@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##
-## Copyright (C) 2015-2016 João Ricardo Lourenço <jorl17.8@gmail.com>
+## Copyright (C) 2015-2017 João Ricardo Lourenço <jorl17.8@gmail.com>
 ##
 ## Github: https://github.com/Jorl17
 ##
@@ -30,11 +30,13 @@ from zipfile import ZipFile
 import sys
 
 __author__ = 'jorl17'
+VERSION = '1.0.1'
 
 # Python 2 compatibility
 is_python2 = sys.version_info[0] == 2
 if is_python2:
     FileExistsError = OSError
+
 
 
 #------------------------------------------------------------------------------
@@ -348,7 +350,9 @@ def determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_a
 # Print summary info on the fields used, if they are used. Used when the
 # process is done
 #------------------------------------------------------------------------------
-def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk, retina_support):
+def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string,
+                          unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name,
+                          jdk, retina_support, use_screen_menu_bar, working_directory):
     def print_field_if_not_null(name, field):
         if field:
             print('{}: {}'.format(name, field))
@@ -364,10 +368,14 @@ def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_na
     if retina_support:
         print('Retina support enabled.')
 
+    if use_screen_menu_bar:
+        print('macOS menubar support enabled (might not always work).')
+
     print('---')
     print_field_if_not_null('JVMOptions', orig_jvm_options)
     print_field_if_not_null('JVMMainClassName', main_class_name)
     print_field_if_not_null('JVMRuntime', jdk)
+    print_field_if_not_null('JAR Working directory', working_directory)
 
 #------------------------------------------------------------------------------
 # This is the main application logic. It receives the arguments straight from
@@ -440,7 +448,9 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
                       main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature, retina_screen)
     copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile)
 
-    print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string, unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name, jdk_name, retina_screen)
+    print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string,
+                          unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name,
+                          jdk_name, retina_screen, use_screen_menu_bar, working_directory)
 
     print("\n{} packaged to {}.".format(jar_file, os.path.abspath(app_full_path)))
 
@@ -489,6 +499,8 @@ def parse_input():
            options.retina_screen, options.use_screen_menu_bar, options.working_directory
 
 def main():
+    print('jar2app %s, João Ricardo Lourenço, 2015-2017 <jorl17.8@gmail.com>.' % VERSION)
+    print('Github page: https://github.com/Jorl17/jar2app/')
     make_app(*parse_input())
 
 main()
