@@ -6,7 +6,7 @@
     
 creating `input.App` in the process. No third-party libraries. No cruft.
 
-Though simple and easy to use, there are **loads of configurable options**, such as setting icons, bundle names or bundling your own JRE/JDK.
+Though simple and easy to use, there are [**loads of configurable options**](#what-are-all-the-options), such as setting icons, bundle names or bundling your own JRE/JDK.
 
 **Install instructions** can be found [here](#how-do-i-installuninstall-it). **Example usage** can be found [here](#example-usage).
 
