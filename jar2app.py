@@ -266,13 +266,16 @@ def copy_jdk(app_full_path, jdk, jdk_isfile):
             try:
                 base_path = os.path.join(app_full_path, 'Contents', 'PlugIns')
                 dir = os.listdir(base_path)[0]
-                os.rename(os.path.join(base_path, dir),
-                          os.path.join(base_path, strip_extension_from_name(os.path.basename(jdk))))
+                final_dir = os.path.join(base_path, strip_extension_from_name(os.path.basename(jdk)))
+                shutil.rmtree(final_dir, ignore_errors=True)  # Delete old folder (if it exists)
+                os.rename(os.path.join(base_path, dir), final_dir)
                 shutil.rmtree(tmpdir)
             except:
                 raise #FIXME
         else:
-            shutil.copytree(jdk, os.path.join(app_full_path, 'Contents', 'PlugIns', os.path.basename(jdk)))
+            destination = os.path.join(app_full_path, 'Contents', 'PlugIns', os.path.basename(jdk))
+            shutil.rmtree(destination, ignore_errors=True) # Delete old folder (if it exists)
+            shutil.copytree(jdk, destination, symlinks=True)
 
 
 # ------------------------------------------------------------------------------
@@ -386,6 +389,10 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     app_name          = strip_extension_from_name(os.path.basename(app_full_path))
     icon              = default_value(icon, '')
     bundle_identifier = default_value(bundle_identifier, DEFAULT_BUNDLE_IDENTIFIER_PREFIX + app_name)
+
+    if jdk:
+        # Remove any trailing forward and backslashes which might screw up os.path.basename when copying the JDK.
+        jdk = jdk.rstrip('/').rstrip('\\')
 
     if use_screen_menu_bar:
         jvm_options += ' -Dapple.laf.useScreenMenuBar=true'
