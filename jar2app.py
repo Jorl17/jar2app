@@ -419,6 +419,9 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
         else:
             bundle_displayname = app_name
 
+	# Set the app name in the macOS menu bar (About and Quit menu items)
+    jvm_options += ' -Xdock:name=%s' % bundle_displayname
+
     # When we get here, we always have a displayname. So if there's no bundlename, go with that. It may itself have
     # come from the app name
     bundle_name = default_value(bundle_name, bundle_displayname)
