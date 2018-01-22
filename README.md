@@ -253,6 +253,9 @@ You can also pass the JDK/JRE as a **zip file**. Assume you have it in compresse
   -o, --use-osx-menubar
                         Use OSX menu bar instead of Java menu bar (Default:
                         False).
+  -e EXECUTABLE, --executable-name=EXECUTABLE
+                        Name of the internal executable to launch (Default:
+                        JavaAppLauncher).
   -w WORKING_DIRECTORY, --working-directory=WORKING_DIRECTORY
                         Set current working directory (user.dir) on launch
                         (Default: $APP_ROOT/Contents).
