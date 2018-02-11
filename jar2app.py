@@ -28,6 +28,7 @@ import shutil
 import tempfile
 from zipfile import ZipFile
 import sys
+import shlex
 
 __author__ = 'jorl17'
 VERSION = '1.0.1'
@@ -218,7 +219,7 @@ def create_plist_file(destination_folder, icon, bundle_identifier, bundle_displa
 def string_to_plist_xmlarray_values(s):
     if not s:
         return ''
-    return  '        <string>' + '</string>\n        <string>'.join( [i.strip() for i in s.split() ] ) + '</string>'
+    return  '        <string>' + '</string>\n        <string>'.join( [i.strip() for i in shlex.split(s) ] ) + '</string>'
 
 #------------------------------------------------------------------------------
 # Check if JDK/JRE is valid. It can be a zip file or it can be a directory.
@@ -411,7 +412,7 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
         jvm_options += ' -Dapple.laf.useScreenMenuBar=true'
 
     if working_directory:
-        jvm_options += ' -Duser.dir=%s' % working_directory
+        jvm_options += ' -Duser.dir="%s"' % working_directory
 
     if not bundle_displayname:
         # If no bundle_displayname is provided:
@@ -425,7 +426,7 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
             bundle_displayname = app_name
 
 	# Set the app name in the macOS menu bar (About and Quit menu items)
-    jvm_options += ' -Xdock:name=%s' % bundle_displayname
+    jvm_options += ' -Xdock:name="%s"' % bundle_displayname
 
     # When we get here, we always have a displayname. So if there's no bundlename, go with that. It may itself have
     # come from the app name
