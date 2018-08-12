@@ -300,9 +300,11 @@ def copy_preserve_status(src, dst):
 # the Localizable.strings file, the JavaAppLauncher executable and, finally,
 # the JDK/JRE and application icon if they were provided
 #------------------------------------------------------------------------------
-def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable):
+def copy_base_files(app_full_path, icon, splash_screen, jar_file, jdk, jdk_isfile, executable):
     if icon:
         copy_preserve_status(icon,os.path.join(app_full_path, 'Contents', 'Resources'))
+    if splash_screen:
+        copy_preserve_status(splash_screen,os.path.join(app_full_path, 'Contents', 'Resources'))
     copy_preserve_status(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
     copy_preserve_status(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', executable))
     make_executable(os.path.join(app_full_path, 'Contents', 'MacOS', executable))
@@ -355,7 +357,7 @@ def determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_a
 # Print summary info on the fields used, if they are used. Used when the
 # process is done
 #------------------------------------------------------------------------------
-def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string,
+def print_final_file_info(icon, splash_screen, bundle_identifier, bundle_displayname, bundle_name, short_version_string,
                           unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name,
                           jdk, retina_support, use_screen_menu_bar, working_directory, executable):
     def print_field_if_not_null(name, field):
@@ -370,6 +372,7 @@ def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_na
     print_field_if_not_null('CFBundleSignature', unique_signature)
     print_field_if_not_null('CFBundleVersion', bundle_version)
     print_field_if_not_null('NSHumanReadableCopyright', copyright_str)
+    print_field_if_not_null('Splash Screen', splash_screen)
     if retina_support:
         print('Retina support enabled.')
 
@@ -389,7 +392,7 @@ def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_na
 # copies files (packing the JDK/JRE) and creates the plist file. In the end,
 # if all went well, it displays summary info.
 #------------------------------------------------------------------------------
-def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_displayname=None, bundle_name=None,
+def make_app(jar_file, output='.', icon=None, splash_screen=None, bundle_identifier=None, bundle_displayname=None, bundle_name=None,
              bundle_version=None, short_version_string=None, copyright_str=None, main_class_name=None,
              jvm_arguments=None, jvm_options=None, jdk=None, unique_signature=None, auto_append_app=True,
              retina_screen=True, use_screen_menu_bar=False, working_directory=None, executable=None):
@@ -402,6 +405,7 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     app_full_path     = determine_app_name(jar_name, output, bundle_displayname, bundle_name, auto_append_app)
     app_name          = strip_extension_from_name(os.path.basename(app_full_path))
     icon              = default_value(icon, '')
+    splash_screen     = default_value(splash_screen, '')
     bundle_identifier = default_value(bundle_identifier, DEFAULT_BUNDLE_IDENTIFIER_PREFIX + app_name)
 
     if jdk:
@@ -413,6 +417,9 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
 
     if working_directory:
         jvm_options += ' -Duser.dir="%s"' % working_directory
+
+    if splash_screen:
+        jvm_options += ' -splash:$APP_ROOT/Contents/Resources/%s' % splash_screen
 
     if not bundle_displayname:
         # If no bundle_displayname is provided:
@@ -455,9 +462,9 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     create_plist_file(os.path.join(app_full_path, 'Contents'), os.path.basename(icon), bundle_identifier,
                       bundle_displayname, bundle_name,bundle_version,short_version_string,copyright_str,
                       main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature, retina_screen, executable)
-    copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable)
+    copy_base_files(app_full_path, icon, splash_screen, jar_file, jdk, jdk_isfile, executable)
 
-    print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string,
+    print_final_file_info(icon, splash_screen, bundle_identifier, bundle_displayname, bundle_name, short_version_string,
                           unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name,
                           jdk_name, retina_screen, use_screen_menu_bar, working_directory, executable)
 
@@ -468,6 +475,7 @@ def parse_input():
     parser.add_option('-n', '--name', help='Package/Bundle name.', dest='bundle_name', type='string', default=None)
     parser.add_option('-d', '--display-name', help='Package/Bundle display name.', dest='bundle_displayname', type='string',default=None)
     parser.add_option('-i', '--icon',help='Icon (in .icns format). (Default: None)', dest='icon', type='string', default=None)
+    parser.add_option('-p', '--splash-screen',help='Splash Screen (in .png format). (Default: None)', dest='splash_screen', type='string', default=None)
     parser.add_option('-b', '--bundle-identifier', help='Package/Bundle identifier (e.g. com.example.test) (Default is application name prefix by {}.'.format(DEFAULT_BUNDLE_IDENTIFIER_PREFIX), dest='bundle_identifier',type='string', default=None)
     parser.add_option('-v', '--version', help='Package/Bundle version (e.g. 1.0.0) (Default: {}).'.format(DEFAULT_VERSION),dest='bundle_version', type='string', default=DEFAULT_VERSION)
     parser.add_option('-s', '--short-version', help='Package/Bundle short version (see Apple\'s documentation on CFBundleShortVersionString) (Default: {}).'.format(DEFAULT_VERSION), dest='short_version_string',type='string', default=DEFAULT_VERSION)
@@ -504,7 +512,7 @@ def parse_input():
 
     jvm_arguments = ''
 
-    return input_file, output, options.icon, options.bundle_identifier, options.bundle_displayname, options.bundle_name,\
+    return input_file, output, options.icon, options.splash_screen, options.bundle_identifier, options.bundle_displayname, options.bundle_name,\
            options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name,\
            jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name,\
            options.retina_screen, options.use_screen_menu_bar, options.working_directory, options.executable

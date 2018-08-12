@@ -216,7 +216,10 @@ You can also pass the JDK/JRE as a **zip file**. Assume you have it in compresse
                         Package/Bundle name.
   -d BUNDLE_DISPLAYNAME, --display-name=BUNDLE_DISPLAYNAME
                         Package/Bundle display name.
-  -i ICON, --icon=ICON  Icon (in .icns format). (Default: None)
+  -i ICON, --icon=ICON  Icon (in .icns format). 
+			(Default: None)
+  -p SPLASH_SCREEN,	--splash-screen=SPLASH_SCREEN
+			(in .png format). (Default: None)
   -b BUNDLE_IDENTIFIER, --bundle-identifier=BUNDLE_IDENTIFIER
                         Package/Bundle identifier (e.g. com.example.test)
                         (Default is application name prefix by
