@@ -300,7 +300,7 @@ def copy_preserve_status(src, dst):
 # the Localizable.strings file, the JavaAppLauncher executable and, finally,
 # the JDK/JRE and application icon if they were provided
 #------------------------------------------------------------------------------
-def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable):
+def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable, splash_screen):
     if icon:
         copy_preserve_status(icon,os.path.join(app_full_path, 'Contents', 'Resources'))
     copy_preserve_status(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
@@ -308,6 +308,8 @@ def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable):
     make_executable(os.path.join(app_full_path, 'Contents', 'MacOS', executable))
     copy_preserve_status(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
     copy_jdk(app_full_path, jdk, jdk_isfile)
+    if splash_screen:
+        copy_preserve_status(splash_screen, os.path.join(app_full_path, 'Contents', 'Resources'))
 
 #------------------------------------------------------------------------------
 # Determine the destination Appname (and full path) taking into account the
@@ -392,7 +394,7 @@ def print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_na
 def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_displayname=None, bundle_name=None,
              bundle_version=None, short_version_string=None, copyright_str=None, main_class_name=None,
              jvm_arguments=None, jvm_options=None, jdk=None, unique_signature=None, auto_append_app=True,
-             retina_screen=True, use_screen_menu_bar=False, working_directory=None, executable=None):
+             retina_screen=True, use_screen_menu_bar=False, working_directory=None, executable=None, splash_screen=None):
     def default_value(d, default):
         return d if d else default
 
@@ -403,6 +405,7 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     app_name          = strip_extension_from_name(os.path.basename(app_full_path))
     icon              = default_value(icon, '')
     bundle_identifier = default_value(bundle_identifier, DEFAULT_BUNDLE_IDENTIFIER_PREFIX + app_name)
+    splash_screen     = default_value(splash_screen, '')
 
     if jdk:
         # Remove any trailing forward and backslashes which might screw up os.path.basename when copying the JDK.
@@ -413,6 +416,9 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
 
     if working_directory:
         jvm_options += ' -Duser.dir="%s"' % working_directory
+
+    if splash_screen:
+        jvm_options += ' -splash:$APP_ROOT/Contents/Resources/%s' % os.path.basename(splash_screen)
 
     if not bundle_displayname:
         # If no bundle_displayname is provided:
@@ -455,7 +461,7 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
     create_plist_file(os.path.join(app_full_path, 'Contents'), os.path.basename(icon), bundle_identifier,
                       bundle_displayname, bundle_name,bundle_version,short_version_string,copyright_str,
                       main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature, retina_screen, executable)
-    copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable)
+    copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable, splash_screen)
 
     print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string,
                           unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name,
@@ -482,6 +488,8 @@ def parse_input():
     parser.add_option('-e', '--executable-name', help='Name of the internal executable to launch (Default: %s).' % DEFAULT_EXECUTABLE_NAME,
                       dest='executable', default='JavaAppLauncher')
     parser.add_option('-w','--working-directory', help='Set current working directory (user.dir) on launch (Default: $APP_ROOT/Contents).', dest='working_directory', type='string', default='$APP_ROOT/Contents')
+    parser.add_option('-p', '--splash-screen', help='Path for image to be used as Splash screen (Default: None)',
+                      dest='splash_screen', type='string', default=None)
 
     (options, args) = parser.parse_args()
 
@@ -507,7 +515,7 @@ def parse_input():
     return input_file, output, options.icon, options.bundle_identifier, options.bundle_displayname, options.bundle_name,\
            options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name,\
            jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name,\
-           options.retina_screen, options.use_screen_menu_bar, options.working_directory, options.executable
+           options.retina_screen, options.use_screen_menu_bar, options.working_directory, options.executable, options.splash_screen
 
 def main():
     print('jar2app %s, João Ricardo Lourenço, 2015-2017 <jorl17.8@gmail.com>.' % VERSION)

@@ -259,5 +259,8 @@ You can also pass the JDK/JRE as a **zip file**. Assume you have it in compresse
   -w WORKING_DIRECTORY, --working-directory=WORKING_DIRECTORY
                         Set current working directory (user.dir) on launch
                         (Default: $APP_ROOT/Contents).
+  -p SPLASH_SCREEN, --splash-screen=SPLASH_SCREEN
+                        Path for image to be used as Splash screen (Default:
+                        None)
 ```
 
