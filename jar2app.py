@@ -483,7 +483,7 @@ def parse_input():
     parser.add_option('-a', '--no-append-app-to-name', help='Do not try to append .app to the output file by default.', dest='auto_append_name', action='store_false')
     parser.add_option('-l', '--low-res-mode', help='Do not try to report retina-screen capabilities (use low resolution mode; by default high resolution mode is used).',dest='retina_screen', action='store_false')
     parser.add_option('-o', '--use-osx-menubar', help='Use OSX menu bar instead of Java menu bar (Default: False).', dest='use_screen_menu_bar', action='store_true')
-    parser.add_option('-x', '--executable-file', help='Internal executable to launch.', dest='executable_file', type='string', default=None)
+    parser.add_option('-x', '--executable-file', help='Internal executable to launch. By default, JavaAppLauncher provided by jar2app is used.', dest='executable_file', type='string', default=None)
     parser.add_option('-e', '--executable-name', help='Name of the internal executable to launch (Default: %s).' % DEFAULT_EXECUTABLE_NAME,
                       dest='executable', default='JavaAppLauncher')
     parser.add_option('-w','--working-directory', help='Set current working directory (user.dir) on launch (Default: $APP_ROOT/Contents).', dest='working_directory', type='string', default='$APP_ROOT/Contents')

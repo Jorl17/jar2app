@@ -46,7 +46,7 @@ Table of Contents
 (TOC created with the help of [gh-md-toc](https://github.com/ekalinin/github-markdown-toc))
     
 # Aren't there other tools that do this? Why another one?
-There are other tools that do this. I acklowedge them and even have [several links to them](#jar2app-doesnt-do-what-i-want-are-there-other-alternatives).
+There are other tools that do this. I acknowledge them and even have [several links to them](#jar2app-doesnt-do-what-i-want-are-there-other-alternatives).
 
 However, this project was born out of the need to do something easily and without much cruft. Most solutions out there require a gazillion arguments, or installing *ant* and memorizing lots of conventions. **jar2app**, however, tries to keep the power of those utilities while providing high simplicity in the process. Really, isn't it wonderful to have such an easy-to-use interface?
 
@@ -117,7 +117,7 @@ There are several keys that Apple defines, and you might want to [check them out
 * **CFBundleSignature**: This is chosen from what you supply or the string "????".
 * **NSHumanReadableCopyright**: This is set to what you supply or the empty string
 
-The `info.plist` file whill contain additional keys, but there are used to pass information to *JavaAppLauncher* (JVM arguments, JDK/JRE, etc)
+The `info.plist` file will contain additional keys, but there are used to pass information to *JavaAppLauncher* (JVM arguments, JDK/JRE, etc)
 
 # If I only pass the jar and no other options, what are the defaults used by jar2app?
 **jar2app** assumes that you want to create an app file with **the same basename as your jar file** and in your **current working directory**. It assumes no JRE/JDK is to be bundled, and that no special arguments have to be passed to the JVM. The remaining options, such as the Icon, display name and others, are figured out as [described in here](#apple-defines-several-keys-for-its-app-format-how-does-jar2app-figure-them-out). **The short version is that all names get set to the basename of your jar, and that versions are set to 1.0.0**.
@@ -256,6 +256,9 @@ You can also pass the JDK/JRE as a **zip file**. Assume you have it in compresse
   -e EXECUTABLE, --executable-name=EXECUTABLE
                         Name of the internal executable to launch (Default:
                         JavaAppLauncher).
+  -x EXECUTABLE_FILE, --executable-file=EXECUTABLE_FILE
+                        Internal executable to launch. By default,
+                        JavaAppLauncher provided by jar2app is used.
   -w WORKING_DIRECTORY, --working-directory=WORKING_DIRECTORY
                         Set current working directory (user.dir) on launch
                         (Default: $APP_ROOT/Contents).
