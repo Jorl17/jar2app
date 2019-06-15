@@ -296,7 +296,7 @@ def copy_preserve_status(src, dst):
         shutil.copy(src, dst)
 
 #------------------------------------------------------------------------------
-# Copy all files to the previously created directory. This involes copying
+# Copy all files to the previously created directory. This involves copying
 # the Localizable.strings file, the JavaAppLauncher executable and, finally,
 # the JDK/JRE and application icon if they were provided
 #------------------------------------------------------------------------------
@@ -311,6 +311,11 @@ def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable, 
     make_executable(os.path.join(app_full_path, 'Contents', 'MacOS', executable))
     copy_preserve_status(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
     copy_jdk(app_full_path, jdk, jdk_isfile)
+
+
+def copy_additional_files_and_libraries(app_full_path, libs:str, files):
+    libs_and_dirs = dict(libdir.split(';') for libdir in libs)
+    copy_preserve_status(libs, os.path.join(app_full_path))
 
 #------------------------------------------------------------------------------
 # Determine the destination Appname (and full path) taking into account the
@@ -486,7 +491,12 @@ def parse_input():
     parser.add_option('-x', '--executable-file', help='Internal executable to launch. By default, JavaAppLauncher provided by jar2app is used.', dest='executable_file', type='string', default=None)
     parser.add_option('-e', '--executable-name', help='Name of the internal executable to launch (Default: %s).' % DEFAULT_EXECUTABLE_NAME,
                       dest='executable', default='JavaAppLauncher')
-    parser.add_option('-w','--working-directory', help='Set current working directory (user.dir) on launch (Default: $APP_ROOT/Contents).', dest='working_directory', type='string', default='$APP_ROOT/Contents')
+    parser.add_option('-w', '--working-directory', help='Set current working directory (user.dir) on launch (Default: $APP_ROOT/Contents).', dest='working_directory', type='string', default='$APP_ROOT/Contents')
+    parser.add_option('-f', '-additional-jars', help='Additional libraries to be added along with the primary JAR. Semicolon delimited libraries with optional comma delimiter to specify the destination directory, otherwise default to Contents/Java (e.g. -f \'dependency.jar;dep2.jar,Contents/Java/libs/\'',
+                      dest='libraries',  type='string', default=None)
+    parser.add_option('-g', '--additional-files', help='Additional files to be added to the app. Semicolon delimited files with mandatory comma delimited directory (e.g. --additional-files \'db1.db,Contents/Java/databases;db2.db,Contents/Java/databases\'',
+                      dest='files', type='string', default=None)
+
 
     (options, args) = parser.parse_args()
 
@@ -513,7 +523,7 @@ def parse_input():
            options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name,\
            jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name,\
            options.retina_screen, options.use_screen_menu_bar, options.working_directory, options.executable,\
-           options.executable_file
+           options.executable_file, options.libraries, options.files
 
 def main():
     print('jar2app %s, João Ricardo Lourenço, 2015-2017 <jorl17.8@gmail.com>.' % VERSION)
