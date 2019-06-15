@@ -312,10 +312,25 @@ def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable, 
     copy_preserve_status(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
     copy_jdk(app_full_path, jdk, jdk_isfile)
 
+#------------------------------------------------------------------------------
+# Create new directories if necessary and copy the libraries/files to the
+# new directories or the default directory if no path is given
+#------------------------------------------------------------------------------
+def copy_additional_files_and_libraries(app_full_path, libs_or_files, default_path):
+    # create mapping to libs/files to respective directories
+    libs_or_files_and_dirs = (dict([lib_dir.split(',')]) if len(lib_dir.split(',')) > 1 else {lib_dir: ""} for lib_dir in libs_or_files.split(';'))
 
-def copy_additional_files_and_libraries(app_full_path, libs:str, files):
-    libs_and_dirs = dict(libdir.split(';') for libdir in libs)
-    copy_preserve_status(libs, os.path.join(app_full_path))
+    # create directories for libraries/files using the given structure
+    # If directory structure is empty, use the given default
+    # Otherwise parse given directory to extract subdirectory elements, split on '/', and strip empty strings
+    for lib_file_dir in libs_or_files_and_dirs:
+        if list(lib_file_dir.values())[0] == '':
+            # default to Contents directory
+            copy_preserve_status(list(lib_file_dir.keys())[0], os.path.join(app_full_path, *default_path))
+        else:
+            final_dir_list = list(dir_element for dir_element in (list(subdir for subdir in lib_file_dir.values())[0].split("/")) if dir_element)
+            mkdir_ignore_exists(os.path.join(app_full_path, *final_dir_list))
+            copy_preserve_status(list(lib_file_dir.keys())[0], os.path.join(app_full_path, *final_dir_list))
 
 #------------------------------------------------------------------------------
 # Determine the destination Appname (and full path) taking into account the
@@ -401,7 +416,7 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
              bundle_version=None, short_version_string=None, copyright_str=None, main_class_name=None,
              jvm_arguments=None, jvm_options=None, jdk=None, unique_signature=None, auto_append_app=True,
              retina_screen=True, use_screen_menu_bar=False, working_directory=None, executable=None,
-             executable_file=None):
+             executable_file=None, libraries=None, files=None):
     def default_value(d, default):
         return d if d else default
 
@@ -466,6 +481,12 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
                       main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature, retina_screen, executable)
     copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable, executable_file)
 
+    # Copy additional libraries
+    copy_additional_files_and_libraries(app_full_path, libraries, ['Contents', 'Java'])
+
+    # Copy additional files
+    copy_additional_files_and_libraries(app_full_path, files, ['Contents'])
+
     print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string,
                           unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name,
                           jdk_name, retina_screen, use_screen_menu_bar, working_directory, executable)
@@ -492,9 +513,9 @@ def parse_input():
     parser.add_option('-e', '--executable-name', help='Name of the internal executable to launch (Default: %s).' % DEFAULT_EXECUTABLE_NAME,
                       dest='executable', default='JavaAppLauncher')
     parser.add_option('-w', '--working-directory', help='Set current working directory (user.dir) on launch (Default: $APP_ROOT/Contents).', dest='working_directory', type='string', default='$APP_ROOT/Contents')
-    parser.add_option('-f', '-additional-jars', help='Additional libraries to be added along with the primary JAR. Semicolon delimited libraries with optional comma delimiter to specify the destination directory, otherwise default to Contents/Java (e.g. -f \'dependency.jar;dep2.jar,Contents/Java/libs/\'',
+    parser.add_option('-f', '--additional-jars', help='Additional libraries to be added along with the primary JAR. Semicolon delimited libraries with optional comma delimiter to specify the destination directory, otherwise default to Contents/Java/ (e.g. -f \'dependency.jar;dep2.jar,Contents/Java/libs/\'',
                       dest='libraries',  type='string', default=None)
-    parser.add_option('-g', '--additional-files', help='Additional files to be added to the app. Semicolon delimited files with mandatory comma delimited directory (e.g. --additional-files \'db1.db,Contents/Java/databases;db2.db,Contents/Java/databases\'',
+    parser.add_option('-g', '--additional-files', help='Additional files to be added to the app. Semicolon delimited files with optional comma delimited destination directory, otherwise default to Contents/ (e.g. --additional-files \'db1.db,Contents/Java/databases;db2.db,Contents/Java/databases\'',
                       dest='files', type='string', default=None)
 
 
