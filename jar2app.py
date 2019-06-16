@@ -312,6 +312,47 @@ def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable, 
     copy_preserve_status(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
     copy_jdk(app_full_path, jdk, jdk_isfile)
 
+
+# ------------------------------------------------------------------------------
+# Create new directories if necessary and copy the libraries/files to the
+# new directories or the default directory if no path is given
+# ------------------------------------------------------------------------------
+def copy_additional_files_and_libraries(app_full_path, libs_or_files, default_path):
+    # create mapping of libs/files to respective directories
+    libs_or_files_and_dirs = (dict([lib_dir.split(',')]) if len(lib_dir.split(',')) > 1 else {lib_dir: ""} for lib_dir in libs_or_files.split(';'))
+
+    # create directories for libraries/files using the given structure
+    # If directory structure is empty, use the given default
+    # Otherwise parse given directory to extract subdirectory elements, split on '/', and strip empty strings
+    for lib_file_dir in libs_or_files_and_dirs:
+        lib_or_file = list(lib_file_dir.keys())[0]
+        path = list(lib_file_dir.values())[0]
+
+        if not os.path.exists(lib_or_file):
+            raise Exception("Additional libraries or files not found")
+
+        # Directory not given
+        if path == '':
+            # handle entire folders
+            if os.path.isdir(lib_or_file):
+                for item in os.listdir(lib_or_file):
+                    copy_preserve_status(os.path.join(lib_or_file, item), os.path.join(app_full_path, *default_path))
+            else:
+                # handle single JAR/file
+                copy_preserve_status(lib_or_file, os.path.join(app_full_path, *default_path))
+        else:
+            # Directory given
+            # handle entire folders
+            if os.path.isdir(lib_or_file):
+                for item in os.listdir(lib_or_file):
+                    final_dir_list = list(dir_element for dir_element in (path.split("/")) if dir_element)
+                    mkdir_ignore_exists(os.path.join(app_full_path, *final_dir_list))
+                    copy_preserve_status(os.path.join(lib_or_file, item), os.path.join(app_full_path, *final_dir_list))
+            else:
+                # handle single JAR/file
+                copy_preserve_status(lib_or_file, os.path.join(app_full_path, *default_path))
+
+
 #------------------------------------------------------------------------------
 # Determine the destination Appname (and full path) taking into account the
 # parameters. Note that:
@@ -396,7 +437,7 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
              bundle_version=None, short_version_string=None, copyright_str=None, main_class_name=None,
              jvm_arguments=None, jvm_options=None, jdk=None, unique_signature=None, auto_append_app=True,
              retina_screen=True, use_screen_menu_bar=False, working_directory=None, executable=None,
-             executable_file=None):
+             executable_file=None, libraries=None, files=None):
     def default_value(d, default):
         return d if d else default
 
@@ -461,6 +502,14 @@ def make_app(jar_file, output='.', icon=None, bundle_identifier=None, bundle_dis
                       main_class_name, jvm_arguments, jvm_options, jdk_xml, unique_signature, retina_screen, executable)
     copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable, executable_file)
 
+    # Copy additional libraries
+    if libraries is not None:
+        copy_additional_files_and_libraries(app_full_path, libraries, ['Contents', 'Java'])
+
+    # Copy additional files
+    if files is not None:
+        copy_additional_files_and_libraries(app_full_path, files, ['Contents'])
+
     print_final_file_info(icon, bundle_identifier, bundle_displayname, bundle_name, short_version_string,
                           unique_signature, bundle_version, copyright_str, orig_jvm_options, main_class_name,
                           jdk_name, retina_screen, use_screen_menu_bar, working_directory, executable)
@@ -487,6 +536,12 @@ def parse_input():
     parser.add_option('-e', '--executable-name', help='Name of the internal executable to launch (Default: %s).' % DEFAULT_EXECUTABLE_NAME,
                       dest='executable', default='JavaAppLauncher')
     parser.add_option('-w','--working-directory', help='Set current working directory (user.dir) on launch (Default: $APP_ROOT/Contents).', dest='working_directory', type='string', default='$APP_ROOT/Contents')
+    parser.add_option('-f', '--additional-jars',
+                      help='Additional libraries to be added along with the primary JAR. Semicolon delimited libraries with optional comma delimiter to specify the destination directory, otherwise default to Contents/Java/ (e.g. -f=dependency.jar;dep2.jar,Contents/Java/libs/',
+                      dest='libraries', type='string', default=None)
+    parser.add_option('-g', '--additional-files',
+                      help='Additional files to be added to the app. Semicolon delimited files with optional comma delimited destination directory, otherwise default to Contents/ (e.g. --additional-files=db1.db,Contents/Java/databases;db2.db,Contents/Java/databases',
+                      dest='files', type='string', default=None)
 
     (options, args) = parser.parse_args()
 
@@ -509,11 +564,11 @@ def parse_input():
 
     jvm_arguments = ''
 
-    return input_file, output, options.icon, options.bundle_identifier, options.bundle_displayname, options.bundle_name,\
-           options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name,\
-           jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name,\
-           options.retina_screen, options.use_screen_menu_bar, options.working_directory, options.executable,\
-           options.executable_file
+    return input_file, output, options.icon, options.bundle_identifier, options.bundle_displayname, options.bundle_name, \
+           options.bundle_version, options.short_version_string, options.copyright_str, options.main_class_name, \
+           jvm_arguments, options.jvm_options, options.jdk, options.signature, options.auto_append_name, \
+           options.retina_screen, options.use_screen_menu_bar, options.working_directory, options.executable, \
+           options.executable_file, options.libraries, options.files
 
 def main():
     print('jar2app %s, João Ricardo Lourenço, 2015-2017 <jorl17.8@gmail.com>.' % VERSION)
