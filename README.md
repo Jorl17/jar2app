@@ -60,12 +60,12 @@ If you're also considering why these contributions  weren't just sent to one of 
 
 ## Examples:
 ### Install
-    git clone https://github.com/Jorl17/jar2app
+    git clone https://github.com/tibagni/jar2app
     cd jar2app
     chmod +x install.sh uninstall.sh
     sudo ./install.sh
 ### Install to /usr/local/bin prefix
-    git clone https://github.com/Jorl17/jar2app
+    git clone https://github.com/tibagni/jar2app
     cd jar2app
     chmod +x install.sh uninstall.sh
     sudo ./install.sh /usr/local/bin
