@@ -303,11 +303,11 @@ def copy_preserve_status(src, dst):
 def copy_base_files(app_full_path, icon, jar_file, jdk, jdk_isfile, executable, executable_file):
     if icon:
         copy_preserve_status(icon,os.path.join(app_full_path, 'Contents', 'Resources'))
-    copy_preserve_status(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
+    copy_preserve_status(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jar2app_basefiles', 'Localizable.strings'), os.path.join(app_full_path, 'Contents', 'Resources', 'en.lproj', 'Localizable.strings'))
     if executable_file:
         copy_preserve_status(executable_file, os.path.join(app_full_path, 'Contents', 'MacOS', executable))
     else:
-        copy_preserve_status(os.path.join(os.path.dirname(sys.argv[0]), 'jar2app_basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', executable))
+        copy_preserve_status(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jar2app_basefiles', 'JavaAppLauncher'), os.path.join(app_full_path, 'Contents', 'MacOS', executable))
     make_executable(os.path.join(app_full_path, 'Contents', 'MacOS', executable))
     copy_preserve_status(jar_file, os.path.join(app_full_path, 'Contents', 'Java', os.path.basename(jar_file)))
     copy_jdk(app_full_path, jdk, jdk_isfile)
