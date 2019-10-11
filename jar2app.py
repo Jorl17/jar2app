@@ -155,7 +155,7 @@ def find_jar_mainclass(jar_file):
         lower_fn = orig_fn.lower()
         if lower_fn.startswith('meta-inf') and lower_fn.endswith('manifest.mf'):
             manifest_mf = f.read(orig_fn)
-            for line in manifest_mf.decode().split('\n'):
+            for line in manifest_mf.decode('utf-8').split('\n'):
                 if line.strip().lower().startswith('main-class'):
                     return line.split(':')[1].strip()
 
