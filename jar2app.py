@@ -239,7 +239,7 @@ def determine_jdk(jdk):
         jdk = strip_extension_from_name(os.path.basename(jdk))
 
     dir, name = os.path.split(jdk)
-    return '<key>JVMRuntime</key>\n<string>' + name + '</string>',jdk,isfile
+    return '<key>JVMRuntime</key>\n\t<string>' + name + '</string>',jdk,isfile
 
 #------------------------------------------------------------------------------
 # Copy a JDK to the bundled .app. The app_full_path should be the root of
